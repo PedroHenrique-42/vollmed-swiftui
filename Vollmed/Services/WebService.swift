@@ -4,14 +4,25 @@ struct WebService {
     
     private let baseURL = "http://localhost:3000"
     
-    func downloadImage(from imageUrl: String) async throws -> UIImage? {
-        guard let url = URL(string: imageUrl) else {
+    private let imageCache = NSCache<NSString, UIImage>()
+    
+    
+    func downloadImage(from imageURL: String) async throws -> UIImage? {
+        guard let url = URL(string: imageURL) else {
             print("Erro na URL")
             return nil
         }
         
+        if let cachedImage = imageCache.object(forKey: imageURL as NSString) {
+            return cachedImage
+        }
+        
         let (data, _) = try await URLSession.shared.data(from: url)
-        return UIImage(data: data)
+        
+        guard let image = UIImage(data: data) else { return nil }
+        imageCache.setObject(image, forKey: imageURL as NSString)
+        
+        return image
     }
     
     func getAllSpecialists() async throws -> [Specialist]? {
