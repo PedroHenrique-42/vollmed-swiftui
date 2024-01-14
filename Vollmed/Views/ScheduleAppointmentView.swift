@@ -9,22 +9,30 @@ import SwiftUI
 
 struct ScheduleAppointmentView: View {
     @State private var selectedDate = Date()
+    @State private var showAlert = false
+    @State private var isAppointmentScheduled = false
+    @Environment(\.presentationMode) var presentationMode
+    
     private let dateRange = Date()...(Calendar.current.date(byAdding: .month, value: 1, to: .now))!
     private let service = WebService()
     var specialistID: String
     
     func scheduleAppointment() async {
         do {
-            if let appointment = try await service.scheduleAppointment(
+            if let _ = try await service.scheduleAppointment(
                 specialistID: specialistID,
                 patientID: patientId,
                 date: selectedDate.convertToString()
             ) {
-                print(appointment)
+                isAppointmentScheduled = true
+            } else {
+                isAppointmentScheduled = false
             }
         } catch {
+            isAppointmentScheduled = false
             print("Ocorreu um erro ao agendar a consulta: \(error)")
         }
+        showAlert = true
     }
     
     var body: some View {
@@ -44,9 +52,7 @@ struct ScheduleAppointmentView: View {
             
             
             Button(action: {
-                Task {
-                    await scheduleAppointment()
-                }
+                Task { await scheduleAppointment() }
             }, label: {
                 ButtonView(text: "Agendar consulta")
             })
@@ -54,6 +60,31 @@ struct ScheduleAppointmentView: View {
         }
         .padding()
         .navigationTitle("Agendar consulta")
+        .alert(
+            isAppointmentScheduled ? "Sucesso" : "Ops, algo deu errado",
+            isPresented: $showAlert,
+            presenting: isAppointmentScheduled,
+            actions: { _ in
+                Button(
+                    action: {
+                        presentationMode.wrappedValue.dismiss()
+                    },
+                    label: { Text("Ok") }
+                )
+            },
+            message: { isScheduled in
+                if isScheduled {
+                    Text("A consulta foi agendada com sucesso")
+                }
+                
+                if !isScheduled {
+                    Text(
+                        "Houve um erro ao agendar sua consulta. Por favor tente novamente ou entre em contato via telefone"
+                    )
+                }
+            }
+        )
+        
     }
 }
 
