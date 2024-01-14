@@ -25,11 +25,11 @@ struct HomeView: View {
                 Text("Boas-vindas!")
                     .font(.title2)
                     .bold()
-                    .foregroundColor(Color(.lightBlue))
+                    .foregroundStyle(.lightBlue)
                 Text("Veja abaixo os especialistas da Vollmed disponíveis e marque já a sua consulta!")
                     .font(.title3)
                     .bold()
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(.accent)
                     .multilineTextAlignment(.center)
                     .padding(.vertical, 16)
                 ForEach(specialists) { specialist in

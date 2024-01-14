@@ -4,7 +4,9 @@ import SwiftUI
 struct VollmedApp: App {
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            NavigationStack {
+                HomeView()
+            }
         }
     }
 }
