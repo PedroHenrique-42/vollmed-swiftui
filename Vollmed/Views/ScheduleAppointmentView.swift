@@ -16,6 +16,34 @@ struct ScheduleAppointmentView: View {
     private let dateRange = Date()...(Calendar.current.date(byAdding: .month, value: 1, to: .now))!
     private let service = WebService()
     var specialistID: String
+    var appointmentID: String?
+    var isRescheduleView: Bool
+    
+    init(specialistID: String, appointmentID: String? = nil, isRescheduleView: Bool = false) {
+        self.specialistID = specialistID
+        self.isRescheduleView = isRescheduleView
+        self.appointmentID = appointmentID
+    }
+    
+    func rescheduleAppointment() async {
+        guard let appointmentID else { return }
+        do {
+            let appointment = try await service.rescheduleAppointment(
+                appointmentID: appointmentID,
+                date: selectedDate.convertToString()
+            )
+            if appointment != nil {
+                isAppointmentScheduled = true
+            }
+            if appointment == nil {
+                isAppointmentScheduled = false
+            }
+        } catch {
+            print("Ocorreu um erro ao remarcar consulta")
+            isAppointmentScheduled = false
+        }
+        showAlert = true
+    }
     
     func scheduleAppointment() async {
         do {
@@ -52,14 +80,16 @@ struct ScheduleAppointmentView: View {
             
             
             Button(action: {
-                Task { await scheduleAppointment() }
+                Task {
+                    isRescheduleView ? await rescheduleAppointment() : await scheduleAppointment()
+                }
             }, label: {
-                ButtonView(text: "Agendar consulta")
+                ButtonView(text: isRescheduleView ? "Reagendar Consulta" : "Agendar consulta")
             })
             
         }
         .padding()
-        .navigationTitle("Agendar consulta")
+        .navigationTitle(isRescheduleView ? "Reagendar Consulta" : "Agendar consulta")
         .alert(
             isAppointmentScheduled ? "Sucesso" : "Ops, algo deu errado",
             isPresented: $showAlert,
@@ -74,17 +104,16 @@ struct ScheduleAppointmentView: View {
             },
             message: { isScheduled in
                 if isScheduled {
-                    Text("A consulta foi agendada com sucesso")
+                    Text("A consulta foi \(isRescheduleView ? "reagendada" : "agendada") com sucesso")
                 }
                 
                 if !isScheduled {
                     Text(
-                        "Houve um erro ao agendar sua consulta. Por favor tente novamente ou entre em contato via telefone"
+                        "Houve um erro ao \(isRescheduleView ? "reagendar" : "agendar") sua consulta. Por favor tente novamente ou entre em contato via telefone"
                     )
                 }
             }
         )
-        
     }
 }
 
